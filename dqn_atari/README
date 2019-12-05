@@ -1,0 +1,7 @@
+## for full list of args
+python3 dqn.py -h
+
+# For training with render enabled, with 100 epochs, batch-size 32 and replay memory size of 10000
+python3 dqn.py --num-epochs=100000 --render=0 --log-interval=10 --is_cuda=1 --replay-memory=10000 --batch-size=32
+
+# CUDA is enabled by default. To disable CUDA, set is_cuda=0
