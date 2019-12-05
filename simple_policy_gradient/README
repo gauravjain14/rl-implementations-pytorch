@@ -5,7 +5,7 @@ python3 openai_simple_pg.py -h
 python3 openai_simple_pg.py --env-name="PongNoFrameskip-v4" --num-epochs=100 --render=1 --log-interval=10 --steps-per-epoch=5000
 
 # For training without render enabled
-python3 openai_simple_pg.py --env-name="PongNoFrameskip-v4" --num-epochs=100 --render=0 --log-interval=10 --steps-per-epoch=5000
+python3 openai_simple_pg.py --env-name="PongNoFrameskip-v4" --num-epochs=10000 --render=0 --log-interval=10 --steps-per-epoch=5000
 
 # Right now the code allows you to save the model. The load functionality is yet to be built, though it's nothing 
 
