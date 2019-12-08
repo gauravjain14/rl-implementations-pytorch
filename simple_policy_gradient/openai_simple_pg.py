@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 
 parser = argparse.ArgumentParser(description='run simple policy gradient')
 parser.add_argument('--env-name',type=str,default='PongNoFrameskip-v4')
-parser.add_argument('--num-epochs',type=int,default=10e3)
+parser.add_argument('--num-epochs',type=int,default=10000)
 parser.add_argument('--lr',type=int,default=1e-3)
 parser.add_argument('--save-path',type=str,default='model-atari.pt')
 parser.add_argument('--log-interval',type=int,default=10) # log every 10 epochs
@@ -38,8 +38,8 @@ class PolicyNet(nn.Module):
 	def forward(self,x):
 		x = F.relu(self.fc1(x))
 		x = F.relu(self.fc2(x))
-		x = F.relu(self.fc3(x))
-		return torch.sigmoid(x) # don't apply any activation?
+		#x = F.relu(self.fc3(x))
+		return torch.sigmoid(self.fc3(x)) # don't apply any activation?
 
 def discount_rewards(r):
 	gamma = 1.0 # don't discount for now 0.99 # discount factor for reward

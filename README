@@ -1,0 +1,10 @@
+# nvprof atomic transactions
+nvprof -m atomic_transactions,l2_atomic_transactions --csv *command*
+
+#nvprof tex transcations
+nvprof -m tex_cache_hit_rate,tex_cache_transactions,tex_utilization --csv *command*
+
+#nvprof warp/sm utilization
+nvprof -m warp_execution_efficiency,achieved_occupancy,unique_warps_launched,sm_efficiency --csv *command*
+
+
