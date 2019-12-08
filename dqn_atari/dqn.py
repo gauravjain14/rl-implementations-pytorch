@@ -219,7 +219,9 @@ def train(memory, gamma, batch_size, policy_dqn, train_dqn, optimizer):
 
 
 if __name__=="__main__":
-	#with torch.autograd.profiler.emit_nvtx():
+	start = torch.cuda.Event(enable_timing=True)
+	end = torch.cuda.Event(enable_timing=True)
+
 	#with torch.autograd.profiler.profile(use_cuda=True) as prof:
 		# change to user parseargs
 	epsilon_start = 0.9
@@ -228,6 +230,8 @@ if __name__=="__main__":
 	gamma = 0.99
 	target_update = 10
 	render = args.render
+	record_time_step = True 
+	record_epoch = False
 
 	reset = env.reset()
 	init_screen = get_Tensor(reset)
@@ -248,6 +252,11 @@ if __name__=="__main__":
 	steps_done = 0
 	tot_rewards = []
 	running_mean_reward = 0.0
+	
+	isRecording = False
+	time_Records = []
+	temp_Records = []
+
 	for i in range(args.num_epochs):
 		#print('episode %d'%i)
 		reward_per_episode = 0
@@ -255,9 +264,22 @@ if __name__=="__main__":
 		curr_screen = last_screen
 		state = curr_screen - last_screen
 
+		if record_epoch and not record_time_step and not isRecording:
+			print("Recording Epoch times")
+			isRecording = True
+			start.record()
+		elif record_epoch and record_time_step:
+			print("Can only set recording at one level")
+
 		#profiler.start()
 		for t in count():
 			if render: env.render()
+
+			if record_time_step and not record_epoch and not isRecording:
+				#print("Recording Time per step")
+				isRecording = True
+				start.record()		
+
 			steps_done += 1
 			action = action_policy.select_action(state,policy_dqn,steps_done)
 			obs,reward,done,info = env.step(action.item())
@@ -277,21 +299,44 @@ if __name__=="__main__":
 
 			train(memory,gamma,args.batch_size,policy_dqn,target_dqn,optimizer)
 
+			if isRecording and record_time_step:
+				isRecording = False
+				end.record()
+				torch.cuda.synchronize()
+				temp_Records.append(start.elapsed_time(end))		
+
 			if done:
 				episode_durations.append(t+1)
 				running_mean_reward += (1/(i+1))*(reward_per_episode - running_mean_reward)
 				if i % args.log_interval == 0:
-					print("mean reward after episode %d: %f \n"%( \
-								i,running_mean_reward))
+					print("mean reward after episode %d (duration %d steps): %f \n"%( \
+								i,t+1,running_mean_reward))
 				#plot_durations() # don't plot every iteration. Plot at the end
-				break			
+
+				if temp_Records:
+					time_Records.append(sum(temp_Records)/len(temp_Records))
+					temp_Records = []
+				break	
 
 		#profiler.stop()
 		# update the reward plot
 		tot_rewards.append(reward_per_episode)
 
 		if t % target_update == 0:
+			start.record()
 			target_dqn.load_state_dict(policy_dqn.state_dict())
+			end.record()
+			torch.cuda.synchronize()
+			print(start.elapsed_time(end))
+
+		if isRecording and record_epoch:
+			isRecording = False
+			end.record()
+			torch.cuda.synchronize()
+			time_Records.append(start.elapsed_time(end))		
+
+	for i,elem in enumerate(time_Records):
+		print("Time taken in epoch %d: %f"%(i,elem)) 
 	
 	# Don't plot reward every iteration
 	#plot_durations()
