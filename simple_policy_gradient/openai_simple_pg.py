@@ -79,6 +79,13 @@ if __name__=="__main__":
 	episode_number = 0
 	running_mean_reward = 0.0
 
+	isRecording = False
+	time_Records = []
+	temp_Records = []
+
+	start = torch.cuda.Event(enable_timing=True)
+	end = torch.cuda.Event(enable_timing=True)
+
 	def train_one_epoch():	
 		batch_acts = []
 		batch_log_probs = []
@@ -138,6 +145,7 @@ if __name__=="__main__":
 				done = False
 		
 				if steps_done > args.steps_per_epoch:
+					print("Exiting epoch after %d steps"%steps_done)
 					break
 
 		# take a single policy gradient update step
@@ -145,6 +153,9 @@ if __name__=="__main__":
 		optimizer.step()
 		optimizer.zero_grad() # reset grad every epoch, right?
 	
-	for i in range(args.num_epochs):	
+	for i in range(args.num_epochs):
+		start.record()
 		train_one_epoch()
-		
+		end.record()
+		torch.cuda.synchronize()
+		print("Time for epoch %d: %f"%(i,start.elapsed_time(end)))	
